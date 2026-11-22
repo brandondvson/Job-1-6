@@ -1,91 +1,197 @@
-// Membuat fungsi penilai dengan percabangan logika
-function evaluasiSkor(nama, skor) {
-    const batasMinimal = 75;
-    let status = "";
-
-    // Logika percabangan mengecek kelulusan
-    if (skor >= batasMinimal) {
-        status = "Selamat " + nama + ", Anda dinyatakan LULUS mata pelajaran Pemrograman!";
-    } else {
-        status = "Maaf " + nama + ", Anda Belum Lulus KKM. Silakan mengikuti program Remedial.";
+const articles = [
+    {
+        id: 1,
+        title: "Penerapan Struktur Kode Modular Bantu Perawatan Proyek Web",
+        category: "teknologi",
+        author: "Redaksi Teknologi",
+        date: "20 November 2026",
+        summary: "Memisahkan markup HTML, styling CSS, dan logika JavaScript memudahkan tim pengembang melacak bug serta menambah fitur baru.",
+        content: [
+            "Dalam pengembangan aplikasi web modern, pemisahan tanggung jawab menjadi praktik dasar yang menjaga kode tetap rapi dan mudah dibaca.",
+            "HTML berfungsi sebagai kerangka semantik dokumen, CSS mengatur tata letak dan tampilan visual, sementara JavaScript menangani interaksi pengguna serta manipulasi DOM.",
+            "Dengan struktur yang terpisah, pengembang dapat memperbarui desain tanpa merusak logika skrip maupun struktur konten."
+        ]
+    },
+    {
+        id: 2,
+        title: "Metode Active Recall dan Spaced Repetition Meningkatkan Retensi Materi",
+        category: "pendidikan",
+        author: "Tim Edukasi",
+        date: "19 November 2026",
+        summary: "Menguji ingatan secara aktif dan mengulang materi pada interval waktu tertentu terbukti lebih efektif dibanding membaca ulang pasif.",
+        content: [
+            "Banyak pelajar menghabiskan waktu berjam-jam membaca ulang catatan tanpa benar-benar menguji pemahaman mereka sendiri.",
+            "Teknik active recall mendorong otak mengambil informasi dari memori, sedangkan spaced repetition menjadwalkan pengulangan sebelum informasi memudar.",
+            "Kombinasi keduanya membantu siswa memahami konsep inti sekaligus menghemat waktu belajar jangka panjang."
+        ]
+    },
+    {
+        id: 3,
+        title: "Panduan Perawatan Berkala Skutik Harian agar Tetap Responsif",
+        category: "otomotif",
+        author: "Meja Otomotif",
+        date: "18 November 2026",
+        summary: "Pemeriksaan tekanan ban, kondisi rem, serta sistem kelistrikan dan pencahayaan menjadi kunci kenyamanan berkendara harian.",
+        content: [
+            "Kendaraan yang dipakai setiap hari membutuhkan pengecekan rutin agar performa mesin dan pengereman tetap optimal.",
+            "Pastikan tekanan angin ban sesuai rekomendasi pabrikan, cek keausan kampas rem, dan periksa sambungan kabel lampu atau aksesori tambahan.",
+            "Perawatan preventif kecil secara rutin jauh lebih hemat dibandingkan perbaikan darurat di jalan."
+        ]
+    },
+    {
+        id: 4,
+        title: "Menata Ruang Kerja Minimalis untuk Menjaga Fokus Seharian",
+        category: "gaya-hidup",
+        author: "Rubrik Produktivitas",
+        date: "17 November 2026",
+        summary: "Pencahayaan yang cukup, meja bebas distraksi, dan jeda istirahat teratur membantu menjaga konsentrasi saat bekerja atau belajar.",
+        content: [
+            "Lingkungan fisik berpengaruh besar terhadap tingkat fokus dan kelelahan mata sepanjang hari.",
+            "Menyimpan barang yang tidak diperlukan di luar jangkauan meja membantu mengurangi distraksi visual saat mengerjakan tugas.",
+            "Padukan tata ruang yang rapi dengan jeda singkat setiap beberapa puluh menit agar energi mental tetap terjaga."
+        ]
     }
+];
 
-    return status;
+let activeCategory = "all";
+let searchQuery = "";
+
+const newsGrid = document.getElementById("newsGrid");
+const headlineBanner = document.getElementById("headlineBanner");
+const sectionTitle = document.getElementById("sectionTitle");
+const newsCount = document.getElementById("newsCount");
+const emptyState = document.getElementById("emptyState");
+const searchInput = document.getElementById("searchInput");
+const categoryButtons = document.querySelectorAll(".cat-btn");
+const resetHome = document.getElementById("resetHome");
+
+const articleModal = document.getElementById("articleModal");
+const closeModal = document.getElementById("closeModal");
+const modalCategory = document.getElementById("modalCategory");
+const modalTitle = document.getElementById("modalTitle");
+const modalMeta = document.getElementById("modalMeta");
+const modalBody = document.getElementById("modalBody");
+
+function renderDate() {
+    const dateEl = document.getElementById("currentDate");
+    const now = new Date();
+    dateEl.textContent = now.toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+    });
 }
 
-// Uji coba memanggil fungsi lewat console log
-let hasilUji = evaluasiSkor("Rian", 80);
-console.log("Hasil Fungsi Test:", hasilUji);
+function renderHeadline() {
+    const lead = articles[0];
+    headlineBanner.innerHTML = `
+        <span class="headline-label">Berita Utama</span>
+        <h1>${lead.title}</h1>
+        <p>${lead.summary}</p>
+        <div class="meta-text">${lead.author} &bull; ${lead.date} &bull; Klik untuk baca selengkapnya</div>
+    `;
+    headlineBanner.onclick = () => openArticleModal(lead);
+}
 
-// A. Seleksi elemen DOM masukan dan tombol
-const tombolProses = document.getElementById('btn-proses');
-const elemenHasil = document.getElementById('box-hasil');
+function getFilteredArticles() {
+    return articles.filter((item) => {
+        const matchCategory = activeCategory === "all" || item.category === activeCategory;
+        const keyword = searchQuery.trim().toLowerCase();
+        const matchSearch =
+            keyword === "" ||
+            item.title.toLowerCase().includes(keyword) ||
+            item.summary.toLowerCase().includes(keyword);
+        return matchCategory && matchSearch;
+    });
+}
 
-// B. Memasang event listener klik pada tombol proses data nilai
-tombolProses.onclick = function() {
-    // Mengambil value teks dari input form HTML
-    let namaSiswa = document.getElementById('input-nama').value;
-    let nilaiSiswa = document.getElementById('input-nilai').value;
+function renderNewsList() {
+    const filtered = getFilteredArticles();
+    newsGrid.innerHTML = "";
 
-    // Validasi sederhana: memastikan kolom input tidak kosong
-    if (namaSiswa === "" || nilaiSiswa === "") {
-        elemenHasil.innerText = "Peringatan: Mohon isi Nama dan Nilai terlebih dahulu!";
-        elemenHasil.style.color = "#dc2626"; // Mengubah warna teks menjadi merah via JS
-        elemenHasil.style.borderLeftColor = "#dc2626";
-        return; // Menghentikan eksekusi fungsi jika tidak valid
+    sectionTitle.textContent =
+        activeCategory === "all" ? "Berita Terbaru" : `Kategori: ${activeCategory.replace("-", " ")}`;
+    newsCount.textContent = `${filtered.length} artikel`;
+
+    if (filtered.length === 0) {
+        emptyState.classList.remove("is-hidden");
+        return;
     }
 
-    // Konversi tipe data nilai dari String ke Angka (Number)
-    let nilaiAngka = Number(nilaiSiswa);
+    emptyState.classList.add("is-hidden");
 
-    // Memanggil fungsi logika yang telah dibuat pada Kegiatan 2
-    let kalimatKesimpulan = evaluasiSkor(namaSiswa, nilaiAngka);
+    filtered.forEach((article) => {
+        const card = document.createElement("article");
+        card.className = "news-card";
+        card.innerHTML = `
+            <div>
+                <span class="badge">${article.category.replace("-", " ")}</span>
+                <h3>${article.title}</h3>
+                <p>${article.summary}</p>
+            </div>
+            <div class="card-footer">
+                <span class="meta-text">${article.date}</span>
+                <button type="button" class="read-btn" data-id="${article.id}">Baca &rarr;</button>
+            </div>
+        `;
 
-    // C. Manipulasi DOM: Memasukkan kalimat hasil ke dalam kotak hasil di halaman web
-    elemenHasil.innerText = kalimatKesimpulan;
+        card.querySelector(".read-btn").addEventListener("click", () => openArticleModal(article));
+        newsGrid.appendChild(card);
+    });
+}
 
-    // Memberikan sentuhan warna dinamis berdasarkan kelulusan
-    if (nilaiAngka >= 75) {
-        elemenHasil.style.color = "#15803d"; // Warna teks hijau
-        elemenHasil.style.borderLeftColor = "#15803d";
-    } else {
-        elemenHasil.style.color = "#b91c1c"; // Warna teks merah maroon
-        elemenHasil.style.borderLeftColor = "#b91c1c";
+function openArticleModal(article) {
+    modalCategory.textContent = article.category.replace("-", " ");
+    modalTitle.textContent = article.title;
+    modalMeta.textContent = `${article.author} • ${article.date}`;
+    modalBody.innerHTML = article.content.map((paragraph) => `<p>${paragraph}</p>`).join("");
+    articleModal.classList.remove("is-hidden");
+}
+
+function closeArticleModal() {
+    articleModal.classList.add("is-hidden");
+}
+
+categoryButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+        categoryButtons.forEach((b) => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        activeCategory = btn.dataset.category;
+        renderNewsList();
+    });
+});
+
+searchInput.addEventListener("input", (event) => {
+    searchQuery = event.target.value;
+    renderNewsList();
+});
+
+closeModal.addEventListener("click", closeArticleModal);
+
+articleModal.addEventListener("click", (event) => {
+    if (event.target === articleModal) {
+        closeArticleModal();
     }
-};
+});
 
-// IMPLEMENTASI PERULANGAN LOGIKA (LOOPING)
-const tombolLoop = document.getElementById('btn-loop');
-const elemenBoxLoop = document.getElementById('box-loop');
-
-tombolLoop.onclick = function() {
-    let penampungTeks = "";
-
-    // Logika perulangan mencetak deret angka dari 1 sampai 5
-    for (let i = 1; i <= 5; i++) {
-        penampungTeks += "Mencetak Baris Angka ke-" + i + "<br>";
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !articleModal.classList.contains("is-hidden")) {
+        closeArticleModal();
     }
+});
 
-    // Manipulasi DOM menyuntikkan teks berupa format HTML tag break
-    elemenBoxLoop.innerHTML = penampungTeks;
-    elemenBoxLoop.style.fontStyle = "normal";
-};
+resetHome.addEventListener("click", (event) => {
+    event.preventDefault();
+    activeCategory = "all";
+    searchQuery = "";
+    searchInput.value = "";
+    categoryButtons.forEach((btn) => {
+        btn.classList.toggle("is-active", btn.dataset.category === "all");
+    });
+    renderNewsList();
+});
 
-// IMPLEMENTASI DARK MODE TOGGLE
-const tombolTema = document.getElementById('btn-togle');
-
-tombolTema.onclick = function() {
-    // Menambahkan atau menghapus class 'dark-theme' pada elemen <body> secara bergantian
-    document.body.classList.toggle('dark-theme');
-
-    // Memeriksa apakah class 'dark-theme' saat ini sedang aktif atau tidak
-    if (document.body.classList.contains('dark-theme')) {
-        tombolTema.innerText = "Mode Terang";
-        tombolTema.style.backgroundColor = "#e2e8f0";
-        tombolTema.style.color = "#1e293b";
-    } else {
-        tombolTema.innerText = "Mode Gelap";
-        tombolTema.style.backgroundColor = "#334155";
-        tombolTema.style.color = "#ffffff";
-    }
-};
+renderDate();
+renderHeadline();
+renderNewsList();
